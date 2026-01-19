@@ -1,0 +1,41 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker volumes data
+postgres_data/
+pgadmin_data/
+registry_data/
+
+# SSL certificates and keys
+*.key
+*.pem
+*.crt
+*.csr
+ssl/
+certs/
+
+# Registry auth (sensitive)
+registry/auth/htpasswd
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
