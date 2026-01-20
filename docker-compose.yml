@@ -10,9 +10,8 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
-    # Раскомментируйте после создания Backend
-    # depends_on:
-    #   - backend
+    depends_on:
+      - backend
     networks:
       - autello_network
     restart: unless-stopped
@@ -57,23 +56,30 @@ services:
       - autello_network
     restart: unless-stopped
 
-  # Backend - серверная часть приложения
-  # Раскомментируйте и настройте после создания образа
-  # backend:
-  #   image: localhost:5000/autello-backend:latest
-  #   container_name: autello_backend
-  #   environment:
-  #     DATABASE_URL: postgresql://autello_user:${POSTGRES_PASSWORD:-change_me_in_production}@postgres:5432/autello_db
-  #     NODE_ENV: production
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   networks:
-  #     - autello_network
-  #   restart: unless-stopped
-  #   # Backend доступен только через внутреннюю сеть
-  #   expose:
-  #     - "3000"
+  # Backend - серверная часть приложения (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: autello_backend
+    environment:
+      POSTGRES_USER: autello_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+      POSTGRES_DB: autello_db
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - autello_network
+    restart: unless-stopped
+    # Временно открываем порт для тестирования /docs
+    # После тестирования заменить на expose для приватного доступа
+    ports:
+      - "8000:8000"
+    # expose:
+    #   - "8000"
 
   # Watchtower - автоматическое обновление контейнеров
   watchtower:
