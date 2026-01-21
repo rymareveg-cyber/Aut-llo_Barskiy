@@ -1,7 +1,7 @@
 """
 Модель для хранения заявок от клиентов (applications).
 """
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Numeric
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from core.database import Base
@@ -21,6 +21,12 @@ class Application(Base):
         phone VARCHAR(255),
         email VARCHAR(255),
         comments TEXT,
+        business_niche VARCHAR(255),
+        company_size VARCHAR(50),
+        task_volume VARCHAR(50),
+        role VARCHAR(255),
+        deadline VARCHAR(255),
+        budget NUMERIC(15, 2),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
@@ -40,20 +46,27 @@ class Application(Base):
     # Дополнительная информация
     comments = Column(Text, nullable=True)
     
+    # Поля для анализа температуры льда
+    business_niche = Column(String(255), nullable=True)  # Ниша бизнеса
+    company_size = Column(String(50), nullable=True)  # Размер компании (startup, small, medium, large, enterprise)
+    task_volume = Column(String(50), nullable=True)  # Объем задачи (small, medium, large, enterprise)
+    role = Column(String(255), nullable=True)  # Роль заполняющего (CEO, CTO, Manager, etc.)
+    deadline = Column(String(255), nullable=True)  # Сроки (urgent, 1-2 weeks, 1 month, flexible)
+    budget = Column(Numeric(15, 2), nullable=True)  # Бюджет
+    
     # Временные метки
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
-    # Связь один-к-одному с BehaviorMetrics
-    behavior = relationship("BehaviorMetrics", back_populates="application", uselist=False)
     # Связь с услугой (из admin_settings)
     service = relationship("AdminSettings", foreign_keys=[service_id])
 
 
 from sqlalchemy.orm import Session
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, field_validator, model_validator
+from models.temperature_analysis import calculate_temperature_score, get_temperature_info
 
 
 class ApplicationCreate(BaseModel):
@@ -64,6 +77,12 @@ class ApplicationCreate(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     comments: Optional[str] = None
+    business_niche: Optional[str] = None
+    company_size: Optional[str] = None
+    task_volume: Optional[str] = None
+    role: Optional[str] = None
+    deadline: Optional[str] = None
+    budget: Optional[float] = None
     
     @field_validator('first_name', 'last_name')
     @classmethod
@@ -97,6 +116,12 @@ class ApplicationUpdate(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     comments: Optional[str] = None
+    business_niche: Optional[str] = None
+    company_size: Optional[str] = None
+    task_volume: Optional[str] = None
+    role: Optional[str] = None
+    deadline: Optional[str] = None
+    budget: Optional[float] = None
 
 
 class ApplicationResponse(BaseModel):
@@ -108,8 +133,44 @@ class ApplicationResponse(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     comments: Optional[str] = None
+    business_niche: Optional[str] = None
+    company_size: Optional[str] = None
+    task_volume: Optional[str] = None
+    role: Optional[str] = None
+    deadline: Optional[str] = None
+    budget: Optional[float] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    
+    # Вычисляемые поля для температуры
+    temperature_score: Optional[int] = None
+    temperature: Optional[str] = None
+    department: Optional[str] = None
+    temperature_info: Optional[Dict[str, str]] = None
+    
+    @model_validator(mode='after')
+    def calculate_temperature_fields(self):
+        """Вычисляет поля температуры после создания модели."""
+        try:
+            score, temperature, department = calculate_temperature_score(
+                business_niche=self.business_niche,
+                company_size=self.company_size,
+                task_volume=self.task_volume,
+                role=self.role,
+                deadline=self.deadline,
+                budget=self.budget
+            )
+            self.temperature_score = score
+            self.temperature = temperature
+            self.department = department
+            self.temperature_info = get_temperature_info(temperature)
+        except Exception:
+            # Если произошла ошибка, устанавливаем значения по умолчанию
+            self.temperature_score = 0
+            self.temperature = "cold"
+            self.department = "Общий отдел"
+            self.temperature_info = get_temperature_info("cold")
+        return self
 
     class Config:
         from_attributes = True
@@ -133,9 +194,35 @@ class ApplicationCRUD:
         return db.query(Application).filter(Application.id == application_id).first()
     
     @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[Application]:
+    def get_all(db: Session, skip: int = 0, limit: int = 100, sort_by_temperature: bool = True) -> List[Application]:
         """Получить все заявки с пагинацией."""
-        return db.query(Application).order_by(Application.created_at.desc()).offset(skip).limit(limit).all()
+        query = db.query(Application)
+        
+        if sort_by_temperature:
+            # Сортируем по температуре (hot -> medium -> cold)
+            from models.temperature_analysis import calculate_temperature_score
+            
+            # Создаем функцию для сортировки
+            # В SQLAlchemy сложно сортировать по вычисляемому полю, поэтому
+            # будем сортировать в Python после получения данных
+            applications = query.offset(skip).limit(limit * 3).all()  # Берем больше для сортировки
+            
+            # Сортируем по температуре
+            def get_temp_score(app):
+                score, _, _ = calculate_temperature_score(
+                    business_niche=app.business_niche,
+                    company_size=app.company_size,
+                    task_volume=app.task_volume,
+                    role=app.role,
+                    deadline=app.deadline,
+                    budget=float(app.budget) if app.budget else None
+                )
+                return score
+            
+            applications.sort(key=get_temp_score, reverse=True)
+            return applications[:limit]
+        else:
+            return query.order_by(Application.created_at.desc()).offset(skip).limit(limit).all()
     
     @staticmethod
     def update(db: Session, application_id: int, application_data: ApplicationUpdate) -> Optional[Application]:

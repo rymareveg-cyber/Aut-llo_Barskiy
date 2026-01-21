@@ -1,22 +1,22 @@
 """
 Модель для хранения метрик поведения пользователя на странице.
 """
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
 from core.database import Base
 
 
 class BehaviorMetrics(Base):
     """
     Модель метрик поведения пользователя.
+    Анонимные метрики - application_id просто сохраняется как число без проверок.
     
     SQL код для генерации таблицы:
     
     CREATE TABLE behavior_metrics (
         id SERIAL PRIMARY KEY,
-        application_id INTEGER UNIQUE NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
-        time_on_page INTEGER DEFAULT 0,
+        application_id INTEGER DEFAULT 0,
+        time_on_page FLOAT DEFAULT 0.0,
         buttons_clicked TEXT,
         cursor_positions TEXT,
         return_frequency INTEGER DEFAULT 0,
@@ -29,7 +29,8 @@ class BehaviorMetrics(Base):
     __tablename__ = "behavior_metrics"
 
     id = Column(Integer, primary_key=True, index=True)
-    application_id = Column(Integer, ForeignKey("applications.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    # application_id теперь просто число без ограничений - для анонимных метрик
+    application_id = Column(Integer, default=0, nullable=True)
     
     # Метрики поведения
     time_on_page = Column(Float, default=0.0)  # double precision для времени на странице
@@ -42,9 +43,6 @@ class BehaviorMetrics(Base):
     # Временные метки
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    
-    # Связь один-к-одному с Application
-    application = relationship("Application", back_populates="behavior")
 
 
 from sqlalchemy.orm import Session
@@ -55,7 +53,7 @@ from pydantic import BaseModel
 
 class BehaviorMetricsCreate(BaseModel):
     """Схема для создания записи о метриках поведения."""
-    application_id: int
+    application_id: Optional[int] = 0  # Анонимные метрики - application_id просто игнорируется
     time_on_page: Optional[float] = 0.0
     buttons_clicked: Optional[str] = None
     cursor_positions: Optional[str] = None
@@ -77,7 +75,7 @@ class BehaviorMetricsUpdate(BaseModel):
 class BehaviorMetricsResponse(BaseModel):
     """Схема для ответа с данными о метриках поведения."""
     id: int
-    application_id: int
+    application_id: Optional[int] = 0  # Может быть NULL для анонимных метрик
     time_on_page: float
     buttons_clicked: Optional[str] = None
     cursor_positions: Optional[str] = None

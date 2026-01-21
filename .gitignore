@@ -5,8 +5,6 @@
 
 # Docker volumes data
 postgres_data/
-pgadmin_data/
-registry_data/
 
 # SSL certificates and keys
 *.key
@@ -38,4 +36,18 @@ logs/
 # Temporary files
 tmp/
 temp/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Node
+node_modules/
+dist/
 

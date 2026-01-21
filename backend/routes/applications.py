@@ -23,9 +23,19 @@ def create_application(application: ApplicationCreate, db: Session = Depends(get
 
 
 @router.get("/", response_model=List[ApplicationResponse])
-def get_applications(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def get_applications(
+    skip: int = 0, 
+    limit: int = 100, 
+    sort_by_temperature: bool = True,
+    db: Session = Depends(get_db)
+):
     """Получить список всех заявок с пагинацией."""
-    applications = ApplicationCRUD.get_all(db=db, skip=skip, limit=limit)
+    applications = ApplicationCRUD.get_all(
+        db=db, 
+        skip=skip, 
+        limit=limit,
+        sort_by_temperature=sort_by_temperature
+    )
     return applications
 
 

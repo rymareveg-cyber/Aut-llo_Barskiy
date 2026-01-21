@@ -36,25 +36,25 @@ services:
       timeout: 5s
       retries: 5
 
-  # pgAdmin - веб-интерфейс для управления PostgreSQL
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: autello_pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@autello.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-change_me_in_production}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-      PGADMIN_CONFIG_CHECK_EMAIL_DELIVERABILITY: 'False'
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
-    networks:
-      - autello_network
-    restart: unless-stopped
+  # pgAdmin - веб-интерфейс для управления PostgreSQL (отключен)
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: autello_pgadmin
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@autello.com}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-change_me_in_production}
+  #     PGADMIN_CONFIG_SERVER_MODE: 'False'
+  #     PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+  #     PGADMIN_CONFIG_CHECK_EMAIL_DELIVERABILITY: 'False'
+  #   volumes:
+  #     - pgadmin_data:/var/lib/pgadmin
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     - postgres
+  #   networks:
+  #     - autello_network
+  #   restart: unless-stopped
 
   # Backend - серверная часть приложения (FastAPI)
   backend:
@@ -74,12 +74,9 @@ services:
     networks:
       - autello_network
     restart: unless-stopped
-    # Временно открываем порт для тестирования /docs
-    # После тестирования заменить на expose для приватного доступа
-    ports:
-      - "8000:8000"
-    # expose:
-    #   - "8000"
+    # Порт доступен только внутри Docker network для Nginx
+    expose:
+      - "8000"
 
   # Watchtower - автоматическое обновление контейнеров
   watchtower:
@@ -95,47 +92,43 @@ services:
     networks:
       - autello_network
     restart: unless-stopped
-    # Watchtower не должен обновлять сам себя и registry
+    # Watchtower не должен обновлять сам себя
     command: --label-enable --interval 3600
 
-  # Docker Registry - локальный реестр для образов
-  registry:
-    image: registry:2
-    container_name: autello_registry
-    ports:
-      - "5000:5000"
-    environment:
-      # TLS настройки (раскомментируйте после создания сертификатов)
-      # REGISTRY_HTTP_TLS_CERTIFICATE: /certs/domain.crt
-      # REGISTRY_HTTP_TLS_PRIVATE_KEY: /certs/domain.key
-      # Аутентификация
-      REGISTRY_AUTH: htpasswd
-      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
-      REGISTRY_AUTH_HTPASSWD_REALM: "Autello Docker Registry"
-      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/registry
-      # HTTP Secret для безопасности
-      REGISTRY_HTTP_SECRET: ${REGISTRY_HTTP_SECRET:-728aa6f4542f677d435fd30f58eb553df5c363b73049cd97bfba6a9369a4c36c}
-    volumes:
-      - registry_data:/var/lib/registry
-      - ./registry/auth:/auth:ro
-      # Раскомментируйте после создания сертификатов
-      # - ./registry/certs:/certs:ro
-    networks:
-      - autello_network
-    restart: unless-stopped
-    labels:
-      - "com.centurylinklabs.watchtower.enable=false"
+  # Docker Registry - локальный реестр для образов (отключен)
+  # registry:
+  #   image: registry:2
+  #   container_name: autello_registry
+  #   ports:
+  #     - "5000:5000"
+  #   environment:
+  #     # TLS настройки (раскомментируйте после создания сертификатов)
+  #     # REGISTRY_HTTP_TLS_CERTIFICATE: /certs/domain.crt
+  #     # REGISTRY_HTTP_TLS_PRIVATE_KEY: /certs/domain.key
+  #     # Аутентификация
+  #     REGISTRY_AUTH: htpasswd
+  #     REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+  #     REGISTRY_AUTH_HTPASSWD_REALM: "Autello Docker Registry"
+  #     REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/registry
+  #     # HTTP Secret для безопасности
+  #     REGISTRY_HTTP_SECRET: ${REGISTRY_HTTP_SECRET:-728aa6f4542f677d435fd30f58eb553df5c363b73049cd97bfba6a9369a4c36c}
+  #   volumes:
+  #     - registry_data:/var/lib/registry
+  #     - ./registry/auth:/auth:ro
+  #     # Раскомментируйте после создания сертификатов
+  #     # - ./registry/certs:/certs:ro
+  #   networks:
+  #     - autello_network
+  #   restart: unless-stopped
+  #   labels:
+  #     - "com.centurylinklabs.watchtower.enable=false"
 
 volumes:
   postgres_data:
-    driver: local
-  pgadmin_data:
-    driver: local
-  registry_data:
     driver: local
 
 networks:
   autello_network:
     driver: bridge
-    internal: false  # Сеть доступна извне для registry
+    internal: false
 

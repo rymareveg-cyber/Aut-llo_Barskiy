@@ -15,6 +15,12 @@ const ApplicationForm = ({ onApplicationCreated }) => {
     phone: '',
     email: '',
     comments: '',
+    business_niche: '',
+    company_size: '',
+    task_volume: '',
+    role: '',
+    deadline: '',
+    budget: '',
   })
 
   const [services, setServices] = useState([])
@@ -132,6 +138,12 @@ const ApplicationForm = ({ onApplicationCreated }) => {
         phone: formData.phone || null,
         email: formData.email || null,
         comments: formData.comments.trim() || null,
+        business_niche: formData.business_niche.trim() || null,
+        company_size: formData.company_size || null,
+        task_volume: formData.task_volume || null,
+        role: formData.role.trim() || null,
+        deadline: formData.deadline || null,
+        budget: formData.budget ? parseFloat(formData.budget.replace(/\s/g, '').replace(',', '.')) : null,
       }
       
       const response = await axios.post(`${API_BASE_URL}/applications/`, submitData)
@@ -153,6 +165,12 @@ const ApplicationForm = ({ onApplicationCreated }) => {
         phone: '',
         email: '',
         comments: '',
+        business_niche: '',
+        company_size: '',
+        task_volume: '',
+        role: '',
+        deadline: '',
+        budget: '',
       })
       setContactType('phone')
     } catch (error) {
@@ -326,6 +344,159 @@ const ApplicationForm = ({ onApplicationCreated }) => {
               rows={4}
               placeholder="Расскажите подробнее о вашей задаче (необязательно)"
             />
+          </div>
+
+          {/* Секция: Информация о проекте */}
+          <div className="border-t border-white/10 pt-6 mt-6">
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Информация о проекте
+            </h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Помогите нам лучше понять вашу задачу
+            </p>
+
+            <div className="space-y-4">
+              {/* Ниша бизнеса */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Ниша бизнеса
+                </label>
+                <input
+                  type="text"
+                  name="business_niche"
+                  value={formData.business_niche}
+                  onChange={handleChange}
+                  placeholder="Например: финтех, медицина, e-commerce"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
+                />
+              </div>
+
+              {/* Размер компании и объем задачи */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Размер компании
+                  </label>
+                  <select
+                    name="company_size"
+                    value={formData.company_size}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-slate-800/90 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm appearance-none cursor-pointer"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundSize: '1.5em 1.5em',
+                      paddingRight: '2.5rem'
+                    }}
+                  >
+                    <option value="" className="bg-slate-800 text-white">Выберите размер</option>
+                    <option value="startup" className="bg-slate-800 text-white">Стартап</option>
+                    <option value="small" className="bg-slate-800 text-white">Малый бизнес (до 50 человек)</option>
+                    <option value="medium" className="bg-slate-800 text-white">Средний бизнес (50-250 человек)</option>
+                    <option value="large" className="bg-slate-800 text-white">Крупный бизнес (250-1000 человек)</option>
+                    <option value="enterprise" className="bg-slate-800 text-white">Корпорация (1000+ человек)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Объем задачи
+                  </label>
+                  <select
+                    name="task_volume"
+                    value={formData.task_volume}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-slate-800/90 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm appearance-none cursor-pointer"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundSize: '1.5em 1.5em',
+                      paddingRight: '2.5rem'
+                    }}
+                  >
+                    <option value="" className="bg-slate-800 text-white">Выберите объем</option>
+                    <option value="small" className="bg-slate-800 text-white">Небольшой проект</option>
+                    <option value="medium" className="bg-slate-800 text-white">Средний проект</option>
+                    <option value="large" className="bg-slate-800 text-white">Крупный проект</option>
+                    <option value="enterprise" className="bg-slate-800 text-white">Корпоративный проект</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Роль и сроки */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Ваша роль
+                  </label>
+                  <input
+                    type="text"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    placeholder="Например: CEO, менеджер, владелец"
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Сроки выполнения
+                  </label>
+                  <select
+                    name="deadline"
+                    value={formData.deadline}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-slate-800/90 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm appearance-none cursor-pointer"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundSize: '1.5em 1.5em',
+                      paddingRight: '2.5rem'
+                    }}
+                  >
+                    <option value="" className="bg-slate-800 text-white">Выберите сроки</option>
+                    <option value="urgent" className="bg-slate-800 text-white">Срочно (ASAP)</option>
+                    <option value="1-2 weeks" className="bg-slate-800 text-white">1-2 недели</option>
+                    <option value="1 month" className="bg-slate-800 text-white">1 месяц</option>
+                    <option value="flexible" className="bg-slate-800 text-white">Гибкие сроки</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Бюджет */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Примерный бюджет
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="budget"
+                    value={formData.budget}
+                    onChange={(e) => {
+                      // Разрешаем только цифры, пробелы и запятые
+                      const value = e.target.value.replace(/[^\d\s,]/g, '')
+                      setFormData((prev) => ({ ...prev, budget: value }))
+                    }}
+                    placeholder="Например: 500 000"
+                    className="w-full px-4 py-3 pr-12 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">
+                    ₽
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Указание бюджета поможет нам быстрее подготовить предложение
+                </p>
+              </div>
+            </div>
           </div>
 
           {submitStatus && (

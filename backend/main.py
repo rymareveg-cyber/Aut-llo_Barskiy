@@ -5,12 +5,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import engine, Base
-from routes import applications, behavior_metrics, admin_settings
+from routes import applications, behavior_metrics, admin_settings, auth, admin_panel
 
 # Импортируем все модели для корректного создания таблиц и связей
 from models import applications as applications_model
 from models import behavior_metrics as behavior_metrics_model
 from models import admin_settings as admin_settings_model
+from models import admin as admin_model
 
 # Создаем все таблицы в базе данных
 Base.metadata.create_all(bind=engine)
@@ -35,6 +36,8 @@ app.add_middleware(
 app.include_router(applications.router)
 app.include_router(behavior_metrics.router)
 app.include_router(admin_settings.router)
+app.include_router(auth.router)
+app.include_router(admin_panel.router)
 
 
 @app.get("/")
